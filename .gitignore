@@ -1,3 +1,34 @@
+# ── DHLitSearch Project-Specific ────────────────────────────────────────────
+
+# API Keys & Environment
+.env
+.envrc
+
+# Raw & processed data (never commit paper data to GitHub)
+data/raw/
+data/processed/
+*.csv
+*.json
+*.xml
+
+# ChromaDB vector store (auto-generated, can be large)
+.chroma/
+chroma_db/
+
+# Model weights & embeddings (too large for GitHub)
+*.pkl
+*.pt
+*.bin
+*.h5
+*.safetensors
+embeddings/
+
+# Streamlit cache
+.streamlit/
+
+# ────────────────────────────────────────────────────────────────────────────
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
