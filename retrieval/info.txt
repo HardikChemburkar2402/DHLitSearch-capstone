@@ -1,1 +1,0 @@
-Hardik's semantic search and Ralph's ranking logic
