@@ -216,22 +216,25 @@ cp .env.example .env
 ### Running the Pipeline
 
 ```bash
-# Step 1 — Collect papers from OpenAlex
+# Step 1 – Collect papers from OpenAlex
 python3 src/ingestion/openalex_fetch.py
 
-# Step 2 — Deduplicate the corpus
+# Step 2 – Preprocess and clean the corpus
+python3 src/ingestion/preprocess.py
+
+# Step 3 – Deduplicate the corpus
 python3 src/ingestion/deduplicate.py
 
-# Step 3 — View corpus statistics
+# Step 4 – View corpus statistics
 python3 src/ingestion/stats.py
 
-# Step 4 — Generate BioBERT embeddings (~20 mins first run)
+# Step 5 – Generate BioBERT embeddings (~20 mins first run)
 python3 src/embeddings/biobert_embed.py
 
-# Step 5 — Store embeddings in ChromaDB
+# Step 6 – Store embeddings in ChromaDB
 python3 src/embeddings/chromadb_store.py
 
-# Step 6 — Launch the Streamlit app
+# Step 7 – Launch the Streamlit app
 streamlit run app/streamlit_app.py
 ```
 
@@ -239,12 +242,12 @@ streamlit run app/streamlit_app.py
 
 ## 📊 Corpus at a Glance
 
-> Stats generated from the current corpus — updated as of March 2026
+> Stats generated from the processed and deduplicated corpus — updated as of March 2026
 
 | Metric                | Value                                      |
 | --------------------- | ------------------------------------------ |
-| Total unique papers   | 2,793                                      |
-| Year range            | 2000 – 2026                                |
+| Total unique papers   | 2,775                                      |
+| Year range            | 1959 – 2026                                |
 | Primary data source   | OpenAlex                                   |
 | Embedding model       | BioBERT (dmis-lab/biobert-base-cased-v1.2) |
 | Embedding dimensions  | 768                                        |
@@ -273,16 +276,18 @@ streamlit run app/streamlit_app.py
 
 ```
 OpenAlex API
-     ↓
-openalex_fetch.py     → 3,000 raw papers collected
-     ↓
-deduplicate.py        → 2,793 unique papers
-     ↓
-biobert_embed.py      → 2,793 × 768-dimensional embeddings
-     ↓
-chromadb_store.py     → Searchable vector database ✅
-     ↓
-Semantic Search       → 92.7% relevance on first query ✅
+  ↓
+openalex_fetch.py      → 3,000 raw papers collected
+  ↓
+preprocess.py          → 2,979 cleaned & validated papers
+  ↓
+deduplicate.py         → 2,775 unique papers
+  ↓
+biobert_embed.py       → 2,775 × 768-dimensional embeddings
+  ↓
+chromadb_store.py      → Searchable vector database ✅
+  ↓
+Semantic Search        → ~92%+ relevance on first query ✅
 
 
 ---
