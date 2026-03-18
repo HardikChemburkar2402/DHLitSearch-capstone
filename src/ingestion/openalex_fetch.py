@@ -12,6 +12,13 @@ SEARCH_QUERIES = [
     "online health information seeking",
     "mHealth patient engagement",
     "health information technology literacy"
+
+    # NEW
+    "telehealth literacy",
+    "digital divide healthcare",
+    "patient digital engagement",
+    "health information seeking behavior",
+    "eHealth interventions"
 ]
 
 OUTPUT_PATH = "data/raw/openalex_raw.json"

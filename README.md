@@ -246,7 +246,7 @@ streamlit run app/streamlit_app.py
 
 | Metric                | Value                                      |
 | --------------------- | ------------------------------------------ |
-| Total unique papers   | 2,775                                      |
+| Total unique papers   | 4,289                                      |
 | Year range            | 1959 – 2026                                |
 | Primary data source   | OpenAlex                                   |
 | Embedding model       | BioBERT (dmis-lab/biobert-base-cased-v1.2) |
@@ -277,13 +277,13 @@ streamlit run app/streamlit_app.py
 ```
 OpenAlex API
   ↓
-openalex_fetch.py      → 3,000 raw papers collected
+openalex_fetch.py      → 4,798 raw papers collected
   ↓
-preprocess.py          → 2,979 cleaned & validated papers
+preprocess.py          → 4,728 cleaned & validated papers
   ↓
-deduplicate.py         → 2,775 unique papers
+deduplicate.py         → 4,289 unique papers
   ↓
-biobert_embed.py       → 2,775 × 768-dimensional embeddings
+biobert_embed.py       → 4,289 × 768-dimensional embeddings
   ↓
 chromadb_store.py      → Searchable vector database ✅
   ↓
