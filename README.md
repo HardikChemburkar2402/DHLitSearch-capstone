@@ -244,16 +244,15 @@ streamlit run app/streamlit_app.py
 
 > Stats generated from the processed and deduplicated corpus — updated as of March 2026
 
-| Metric                | Value                                      |
-| --------------------- | ------------------------------------------ |
-| Total unique papers   | 4,289                                      |
-| Year range            | 1959 – 2026                                |
-| Primary data source   | OpenAlex                                   |
-| Embedding model       | BioBERT (dmis-lab/biobert-base-cased-v1.2) |
-| Embedding dimensions  | 768                                        |
-| Vector store          | ChromaDB (cosine similarity)               |
-| Top journal           | Journal of Medical Internet Research       |
-| Sample query accuracy | 92.7% relevance on first result            |
+| Metric                     | Value                                      |
+| -------------------------- | ------------------------------------------ |
+| Total raw papers collected | 490,482+                                   |
+| Primary data source        | OpenAlex (19 queries)                      |
+| Embedding model            | BioBERT (dmis-lab/biobert-base-cased-v1.2) |
+| Embedding dimensions       | 768                                        |
+| Vector store               | ChromaDB (~6GB, cosine similarity)         |
+| Top journal                | PLoS ONE (10,878 papers)                   |
+| Papers without DOI         | 25,957                                     |
 
 ---
 
