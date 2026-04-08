@@ -20,6 +20,7 @@ def embed_abstract(text: str) -> list:
         truncation=True,
         max_length=512,
         padding=True
+    
     )
     with torch.no_grad():
         outputs = model(**inputs)

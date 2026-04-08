@@ -1,7 +1,7 @@
 import json
 import os
 
-INPUT_PATH = "data/processed/papers_preprocessed.json"
+INPUT_PATH  = "data/raw/openalex_raw.json"
 OUTPUT_PATH = "data/processed/papers_deduplicated.json"
 
 def deduplicate():
