@@ -21,7 +21,6 @@ chroma_db/
 *.bin
 *.h5
 *.safetensors
-embeddings/
 
 # Streamlit cache
 .streamlit/
