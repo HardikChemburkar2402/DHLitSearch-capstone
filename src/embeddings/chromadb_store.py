@@ -7,20 +7,14 @@ CHROMA_DIR = ".chroma"
 COLLECTION  = "dhlitsearch_abstracts"
 
 def load_and_store():
-    print("📂 Loading embeddings...")
     with open(INPUT_PATH) as f:
         data = json.load(f)
 
-    print(f"✅ Loaded {len(data)} embedded papers")
-
-    # initialise persistent ChromaDB
     client     = chromadb.PersistentClient(path=CHROMA_DIR)
     collection = client.get_or_create_collection(
         name=COLLECTION,
-        metadata={"hnsw:space": "cosine"}   # cosine similarity
+        metadata={"hnsw:space": "cosine"}
     )
-
-    print("📥 Storing into ChromaDB — this takes ~2-3 mins...")
 
     ids         = []
     embeddings  = []
@@ -38,7 +32,6 @@ def load_and_store():
             "authors": ", ".join(record.get("authors", []))[:300],
         })
 
-    # ChromaDB recommends batching in chunks of 500
     batch_size = 500
     total      = len(ids)
 
@@ -50,10 +43,7 @@ def load_and_store():
             documents  = documents[i:batch_end],
             metadatas  = metadatas[i:batch_end]
         )
-        print(f"  ✅ Stored {batch_end}/{total} papers...")
 
-    print(f"\n🎉 Done! ChromaDB collection '{COLLECTION}' ready")
-    print(f"   Total documents in store : {collection.count()}")
     return client, collection
 
 
