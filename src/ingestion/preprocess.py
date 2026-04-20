@@ -57,8 +57,8 @@ def clean_text(text: Any) -> str:
 
     # Normalize common dash/quote artifacts
     text = text.replace("–", "-").replace("—", "-")
-    text = text.replace(""", '"').replace(""", '"')
-    text = text.replace("'", "'").replace("'", "'")
+    text = text.replace("“", '"').replace("”", '"')
+    text = text.replace("‘", "'").replace("’", "'")
 
     # Collapse repeated whitespace
     text = re.sub(r"\s+", " ", text).strip()

@@ -1,32 +1,72 @@
 import json
 import os
-import torch
-from transformers import AutoTokenizer, AutoModel
+from typing import Any, Tuple
 
 INPUT_PATH  = "data/processed/papers_deduplicated.json"
 OUTPUT_PATH = "data/processed/embeddings.json"
 
 MODEL_NAME  = "dmis-lab/biobert-base-cased-v1.2"
 
-print(f"🤖 Loading BioBERT model: {MODEL_NAME}")
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-model     = AutoModel.from_pretrained(MODEL_NAME)
-model.eval()
+_tokenizer = None
+_model = None
+
+
+def _get_biobert():
+    """
+    Lazy-load BioBERT to avoid downloads/import-time crashes and speed up UI startup.
+    """
+    global _tokenizer, _model
+    if _tokenizer is None or _model is None:
+        print(f"🤖 Loading BioBERT model: {MODEL_NAME}")
+        # Import heavy deps lazily to avoid hard crashes during Streamlit startup
+        # on some macOS + Python builds.
+        from transformers import AutoTokenizer, AutoModel  # type: ignore
+
+        _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+        _model = AutoModel.from_pretrained(MODEL_NAME)
+        _model.eval()
+    return _tokenizer, _model
+
+
+def _fallback_embedding(text: str, dim: int = 768) -> list:
+    """
+    Deterministic lightweight fallback when BioBERT/torch can't be imported.
+    This keeps the UI usable (retrieval quality will be degraded).
+    """
+    import hashlib
+    import math
+
+    h = hashlib.sha256(text.encode("utf-8", errors="ignore")).digest()
+    out = []
+    for i in range(dim):
+        b = h[i % len(h)]
+        # map byte -> [-1, 1] with slight non-linearity
+        x = (b / 255.0) * 2.0 - 1.0
+        out.append(math.tanh(x))
+    return out
 
 def embed_abstract(text: str) -> list:
-    inputs = tokenizer(
-        text,
-        return_tensors="pt",
-        truncation=True,
-        max_length=512,
-        padding=True
-    
-    )
-    with torch.no_grad():
-        outputs = model(**inputs)
-    # mean pooling over all token embeddings
-    embedding = outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
-    return embedding
+    try:
+        # torch import is intentionally inside the call path
+        import torch  # type: ignore
+
+        tokenizer, model = _get_biobert()
+        inputs = tokenizer(
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=512,
+            padding=True,
+        )
+        with torch.no_grad():
+            outputs = model(**inputs)
+        # mean pooling over all token embeddings
+        embedding = outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
+        return embedding
+    except Exception as e:
+        # If the environment can't support torch/transformers, keep app alive.
+        print(f"⚠️ BioBERT embedding unavailable, using fallback embedding. ({e})")
+        return _fallback_embedding(text)
 
 def run():
     with open(INPUT_PATH) as f:
