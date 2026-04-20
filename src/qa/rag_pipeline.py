@@ -1,19 +1,19 @@
-import os
 import time
-from google import genai
 from dotenv import load_dotenv
 
 from src.retrieval.ranking import re_rank_results
 from src.embeddings.biobert_embed import embed_abstract
 from src.embeddings.chromadb_store import search
+from src.qa.llm_interface import GeminiLLM, OllamaLLM, LLMProviderError
 from src.summarization.bart_summarize import BartSummarizer
 
 load_dotenv()
 
 class RAGPipeline:
     def __init__(self):
-        self.client = genai.Client()
-        self.local_fallback = None
+        self.gemini = GeminiLLM(model="gemini-2.5-flash")
+        self.ollama = OllamaLLM(model="llama3")
+        self.local_summarizer = None
 
     def ask_question(self, query: str) -> str:
         query_embedding = embed_abstract(query)
@@ -57,6 +57,11 @@ class RAGPipeline:
         CRITICAL INSTRUCTION: You MUST include inline citations referencing the exact [Paper ID: ...] provided in the context (e.g., [Paper ID: https://doi.org/10.1234...]). 
         DO NOT use generic citations like [Source 1] or [Source 2].
 
+        Output format:
+        - Answer (1–2 paragraphs)
+        - Key points (bullets)
+        - Evidence (bullets, each ends with a [Paper ID: ...] citation)
+
         Context:
         {context}
 
@@ -67,31 +72,30 @@ class RAGPipeline:
         max_retries = 3
         for attempt in range(max_retries):
             try:
-                response = self.client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=prompt
-                )
-                return response.text
+                return self.gemini.generate(prompt).text
             except Exception as e:
                 if attempt < max_retries - 1:
                     print(f"⚠️ API High Demand (Attempt {attempt+1}/{max_retries}). Retrying in 2 seconds...")
                     time.sleep(2)
                 else:
-                    print("\n🚨 Cloud LLM is down! Engaging local Fallback Mechanism on Apple Silicon...\n")
+                    print("\n⚠️ Gemini unavailable. Falling back to local Ollama...\n")
                     break
                     
-        # --- LOCAL OFFLINE FALLBACK ---
-        if self.local_fallback is None:
-            self.local_fallback = BartSummarizer()
-            
-        fallback_answer = "⚠️ *Gemini LLM is currently unavailable due to API rate limits. Generating a local abstractive summary of retrieved documents using Apple Silicon...*\n\n"
-        
-        # Summarize the top 2 retrieved abstracts locally so it doesn't crash the presentation
-        for i in range(min(2, len(valid_docs))):
-            local_summary = self.local_fallback.summarize(valid_docs[i])
-            fallback_answer += f"**Source {i+1} [Paper ID: {valid_ids[i]}]:**\n{local_summary}\n\n"
-            
-        return fallback_answer
+        # --- LOCAL OFFLINE FALLBACK (OLLAMA) ---
+        try:
+            return self.ollama.generate(prompt).text
+        except LLMProviderError:
+            print("\n⚠️ Ollama unavailable. Falling back to extractive evidence...\n")
+
+        # --- FINAL FALLBACK (EXTRACTIVE EVIDENCE) ---
+        if self.local_summarizer is None:
+            self.local_summarizer = BartSummarizer()
+
+        evidence = "*(Fallback mode: showing evidence summaries — LLM generation unavailable)*\n\n"
+        for i in range(min(3, len(valid_docs))):
+            local_summary = self.local_summarizer.summarize(valid_docs[i])
+            evidence += f"**Evidence {i+1} [Paper ID: {valid_ids[i]}]:**\n{local_summary}\n\n"
+        return evidence
         
 if __name__ == "__main__":
     bot = RAGPipeline()
