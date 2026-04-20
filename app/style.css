@@ -1,0 +1,508 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+    /* Palette */
+    --navy-0: #071226;
+    --navy-1: #0b1f3a;
+    --navy-2: #12325c;
+    --navy-3: #1e4a7a;
+
+    --beige-0: #f6f1e7;
+    --beige-1: #efe6d7;
+    --beige-2: #e8dcc8;
+
+    --ink: #0b1f3a;
+    --muted: rgba(11, 31, 58, 0.68);
+
+    --baby-pink: #f7c6d6;
+    --baby-pink-2: #f0a7c0;
+
+    --shadow: rgba(7, 18, 38, 0.12);
+
+    /* System tokens */
+    --surface: rgba(255, 255, 255, 0.70);
+    --surface-strong: rgba(255, 255, 255, 0.86);
+    --stroke: rgba(18, 50, 92, 0.20);
+    --stroke-soft: rgba(247, 198, 214, 0.40);
+    --ring: rgba(247, 198, 214, 0.42);
+
+    --radius: 14px;
+    --radius-sm: 12px;
+}
+
+/* ---------- Base ---------- */
+html,
+body {
+    font-family: 'Inter', 'DM Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    color: var(--ink);
+}
+
+[class*='css'] {
+    font-family: 'Inter', 'DM Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.stApp {
+    background: linear-gradient(
+        165deg,
+        var(--beige-0) 0%,
+        var(--beige-1) 45%,
+        rgba(247, 198, 214, 0.35) 100%
+    );
+    color: var(--ink);
+}
+
+div[data-testid='stAppViewContainer'] {
+    background: transparent;
+}
+
+/* ---------- Top header (Streamlit Cloud "Deploy", menu, etc.) ---------- */
+header[data-testid='stHeader'],
+header[data-testid='stHeader'] * {
+    color: rgba(255, 255, 255, 1) !important;
+}
+
+/* Streamlit header "base button" (e.g., collapse/close icon buttons) */
+button[data-testid='baseButton-header'] {
+    color: rgba(255, 255, 255, 1) !important;
+}
+
+.block-container {
+    max-width: 1200px;
+    padding-top: 1.5rem;
+    padding-bottom: 2.5rem;
+}
+
+/* Typography defaults in main area */
+.main .block-container,
+.main .block-container p,
+.main .block-container span:not([data-baseweb]) {
+    color: var(--ink);
+}
+
+.main .block-container [data-testid='stWidgetLabel'] p,
+.main .block-container label {
+    color: var(--muted) !important;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* ---------- Sidebar ---------- */
+section[data-testid='stSidebar'] {
+    background: linear-gradient(180deg, var(--navy-0) 0%, var(--navy-1) 55%, #152a4a 100%) !important;
+    border-right: 1px solid rgba(247, 198, 214, 0.35);
+}
+
+/* Sidebar content wrapper (Streamlit renders this as stSidebarContent) */
+section[data-testid='stSidebar'] [data-testid='stSidebarContent'] {
+    color: rgba(201, 201, 201, 1) !important;
+}
+
+section[data-testid='stSidebar'] .block-container {
+    color: rgba(201, 201, 201, 1) !important;
+}
+
+section[data-testid='stSidebar'] h1,
+section[data-testid='stSidebar'] h2,
+section[data-testid='stSidebar'] h3,
+section[data-testid='stSidebar'] p,
+section[data-testid='stSidebar'] span,
+section[data-testid='stSidebar'] label {
+    color: rgba(201, 201, 201, 1) !important;
+}
+
+section[data-testid='stSidebar'] [data-testid='stWidgetLabel'] p {
+    color: rgba(246, 241, 231, 0.86) !important;
+}
+
+/* Sidebar header icons (e.g., close/collapse button) */
+section[data-testid='stSidebar'] button[aria-label] svg,
+section[data-testid='stSidebar'] button[aria-label] svg path {
+    color: rgba(252, 252, 253, 1) !important;
+}
+
+/* Main-area close/clear icons (ensure the "X" is visible on light surfaces) */
+.main button[aria-label='Close'] svg,
+.main button[aria-label='Close'] svg path,
+.main button[aria-label='Clear'] svg,
+.main button[aria-label='Clear'] svg path,
+.main button[title='Close'] svg,
+.main button[title='Close'] svg path,
+.main button[title='Clear'] svg,
+.main button[title='Clear'] svg path {
+    color: var(--ink) !important;
+}
+
+section[data-testid='stSidebar'] .stSlider [data-baseweb='slider'] {
+    --slider-color: var(--baby-pink);
+}
+
+/* Slider tick labels (min/max) */
+div[data-testid='stTickBarMin'],
+div[data-testid='stTickBarMax'] {
+    color: rgba(201, 201, 201, 1) !important;
+}
+
+/* ---------- Hero ---------- */
+.app-hero {
+    background: linear-gradient(
+        135deg,
+        rgba(11, 31, 58, 0.97) 0%,
+        rgba(18, 50, 92, 0.92) 50%,
+        rgba(30, 74, 122, 0.88) 100%
+    );
+    border: 1px solid rgba(247, 198, 214, 0.45);
+    border-radius: 16px;
+    padding: 1.35rem 1.5rem 1.25rem;
+    margin: 20px 0;
+    box-shadow: 0 16px 40px var(--shadow);
+}
+
+.app-hero h1 {
+    font-family: 'DM Sans', 'Inter', sans-serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--beige-0) !important;
+    margin: 0 0 0.35rem 0;
+    border: none;
+}
+
+.app-hero p {
+    color: rgba(246, 241, 231, 0.88) !important;
+    font-size: 0.98rem;
+    line-height: 1.55;
+    margin: 0;
+}
+
+.app-hero .tagline {
+    display: inline-block;
+    margin-top: 0.75rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--navy-0) !important;
+    background: linear-gradient(90deg, var(--baby-pink), var(--baby-pink-2));
+}
+
+/* ---------- Headings ---------- */
+.main h1 {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--navy-1) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em;
+    font-size: 1.75rem !important;
+}
+
+.main h2,
+.main h3 {
+    color: var(--navy-2) !important;
+    font-weight: 600 !important;
+}
+
+.main h4 {
+    color: var(--navy-2) !important;
+    font-weight: 600 !important;
+    margin-top: 1rem;
+}
+
+/* ---------- Tabs ---------- */
+div[data-testid='stTabs'] {
+    margin-top: 0.25rem;
+}
+
+div[data-testid='stTabs'] [data-baseweb='tab-list'] {
+    gap: 0.35rem;
+    background: rgba(255, 255, 255, 0.45);
+    padding: 0.35rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--stroke-soft);
+}
+
+div[data-testid='stTabs'] button[data-baseweb='tab'] {
+    border-radius: 10px !important;
+    color: var(--muted) !important;
+    font-weight: 600;
+}
+
+div[data-testid='stTabs'] [aria-selected='true'] {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), var(--beige-0)) !important;
+    color: var(--navy-1) !important;
+    box-shadow: 0 4px 14px var(--shadow);
+}
+
+div[data-testid='stTabs'] button[data-baseweb='tab'] p {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+/* Hide semantic search form submit UI (Enter still submits the form) */
+div[data-testid='stFormSubmitButton'] {
+    display: none !important;
+}
+
+/* Remove any leading icon Streamlit/BaseWeb may render on the 3rd tab */
+div[data-testid='stTabs'] [data-baseweb='tab-list'] button[data-baseweb='tab']:nth-child(3) svg,
+div[data-testid='stTabs'] [data-baseweb='tab-list'] button[data-baseweb='tab']:nth-child(3) img,
+div[data-testid='stTabs'] [data-baseweb='tab-list'] button[data-baseweb='tab']:nth-child(3) i,
+div[data-testid='stTabs'] [data-baseweb='tab-list'] button[data-baseweb='tab']:nth-child(3) [data-baseweb='icon'],
+div[data-testid='stTabs'] [data-baseweb='tab-list'] button[data-baseweb='tab']:nth-child(3) [role='img'],
+div[data-testid='stTabs'] [data-baseweb='tab-list'] button[data-baseweb='tab']:nth-child(3) [aria-hidden='true'] {
+    display: none !important;
+}
+
+/* Some Streamlit versions render tab icons as plain spans (with mask/background). Hide spans, keep label <p>. */
+div[data-testid='stTabs'] [data-baseweb='tab-list'] button[data-baseweb='tab']:nth-child(3) span {
+    display: none !important;
+}
+
+/* Last resort: strip any mask/background-based icons on the 3rd tab */
+div[data-testid='stTabs'] [data-baseweb='tab-list'] button[data-baseweb='tab']:nth-child(3),
+div[data-testid='stTabs'] [data-baseweb='tab-list'] button[data-baseweb='tab']:nth-child(3) * {
+    background-image: none !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+    -webkit-mask: none !important;
+    mask: none !important;
+}
+
+div[data-testid='stTabs'] [data-baseweb='tab-list'] button[data-baseweb='tab']:nth-child(3) p::before,
+div[data-testid='stTabs'] [data-baseweb='tab-list'] button[data-baseweb='tab']:nth-child(3) p::after {
+    content: none !important;
+    background: none !important;
+}
+
+div[data-testid='stTabs'] [data-baseweb='tab-list'] button[data-baseweb='tab']:nth-child(3) p {
+    padding-left: 10px !important;
+}
+
+/* If Streamlit injects pseudo-elements/backgrounds that look like icons, neutralize them */
+div[data-testid='stTabs'] [data-baseweb='tab-list'] button[data-baseweb='tab']:nth-child(3)::before,
+div[data-testid='stTabs'] [data-baseweb='tab-list'] button[data-baseweb='tab']:nth-child(3)::after {
+    content: none !important;
+    background: none !important;
+}
+
+div[data-testid='stTabs'] [data-baseweb='tab-list'] button[data-baseweb='tab']:nth-child(3) {
+    background-image: none !important;
+}
+
+/* ---------- Cards / surfaces ---------- */
+.ui-card {
+    background: var(--surface);
+    border: 1px solid var(--stroke-soft);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 8px 28px var(--shadow);
+}
+
+/* ---------- Chat ---------- */
+[data-testid='stChatMessage'] {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+    margin-bottom: 0.85rem;
+    border: 1px solid var(--stroke-soft);
+    box-shadow: 0 6px 20px var(--shadow);
+}
+
+[data-testid='stChatMessage'] [data-testid='stMarkdownContainer'] p,
+[data-testid='stChatMessage'] [data-testid='stMarkdownContainer'] li {
+    color: var(--ink);
+}
+
+/* Chat input */
+[data-testid='stChatInput'] {
+    border-radius: var(--radius) !important;
+    border: 1px solid var(--stroke) !important;
+    background-color: var(--surface-strong) !important;
+    box-shadow: 0 4px 16px var(--shadow);
+}
+
+[data-testid='stChatInput'] textarea {
+    color: var(--ink) !important;
+}
+
+/* ---------- Inputs (Text/Number etc.) ---------- */
+.main div:is([data-baseweb='input'], [data-baseweb='base-input']) > div {
+    background-color: var(--surface-strong) !important;
+    border: 1px solid var(--stroke) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: 0 4px 16px var(--shadow) !important;
+    transition: box-shadow 120ms ease, border-color 120ms ease, background-color 120ms ease;
+}
+
+.main div:is([data-baseweb='input'], [data-baseweb='base-input']) > div:focus-within {
+    border-color: rgba(18, 50, 92, 0.30) !important;
+    box-shadow: 0 0 0 3px var(--ring) !important;
+}
+
+.main div[data-testid='textInputRootElement'] {
+    border-color: rgba(0, 0, 0, 1) !important;
+    border-radius: 8px !important;
+    border-top-left-radius: 8px !important;
+    border-top-right-radius: 8px !important;
+    border-bottom-right-radius: 8px !important;
+    border-bottom-left-radius: 8px !important;
+}
+
+.main div[data-testid='textInputRootElement']:focus-within {
+    border-color: rgba(0, 0, 0, 1) !important;
+}
+
+.main div:is([data-baseweb='input'], [data-baseweb='base-input']) input {
+    color: var(--ink) !important;
+    background-color: transparent !important;
+    -webkit-text-fill-color: var(--ink) !important;
+}
+
+/* Specific override for the primary search text input */
+.main div:is([data-baseweb='input'], [data-baseweb='base-input']) input#text_input_1 {
+    background-color: rgba(255, 255, 255, 1) !important;
+}
+
+/* Fallbacks (Streamlit sometimes changes BaseWeb wrappers) */
+.main .stTextInput input[type='text'],
+.main .stTextInput input[type='search'] {
+    color: var(--ink) !important;
+    background-color: transparent !important;
+    -webkit-text-fill-color: var(--ink) !important;
+}
+
+.main div[data-baseweb='input'] input:focus {
+    outline: none !important;
+}
+
+.main div[data-baseweb='input'] input::placeholder {
+    color: rgba(11, 31, 58, 0.55) !important;
+    opacity: 1 !important;
+}
+
+/* Number input stepper buttons (avoid dark pill look) */
+.main .stNumberInput div[data-baseweb='input'] [data-baseweb='button'] {
+    background: transparent !important;
+    color: var(--ink) !important;
+    box-shadow: none !important;
+}
+
+.main .stNumberInput div[data-baseweb='input'] [data-baseweb='button']:hover {
+    background: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* ---------- Ethics disclaimer (sidebar) ---------- */
+.ethics-disclaimer {
+    background: rgba(246, 241, 231, 0.10);
+    border-left: 4px solid var(--baby-pink-2);
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    color: rgba(246, 241, 231, 0.95) !important;
+}
+
+.ethics-disclaimer strong {
+    color: var(--baby-pink) !important;
+}
+
+/* ---------- Metrics / dataframe ---------- */
+[data-testid='stMetric'] {
+    background: rgba(255, 255, 255, 0.68);
+    border: 1px solid var(--stroke-soft);
+    border-radius: var(--radius-sm);
+    padding: 0.65rem 0.85rem;
+}
+
+[data-testid='stMetric'] label {
+    color: var(--muted) !important;
+}
+
+[data-testid='stMetric'] [data-testid='stMetricValue'] {
+    color: var(--navy-2) !important;
+}
+
+div[data-testid='stDataFrame'] {
+    border: 1px solid var(--stroke-soft);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 6px 24px var(--shadow);
+}
+
+.streamlit-expanderHeader {
+    font-weight: 600 !important;
+    color: var(--navy-2) !important;
+}
+
+/* ---------- Buttons ---------- */
+.stButton > button,
+.tButton > button {
+    border-radius: var(--radius) !important;
+    font-weight: 700 !important;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.stButton > button:not([kind='secondary']),
+.tButton > button:not([kind='secondary']) {
+    background: linear-gradient(180deg, rgba(30, 74, 122, 1) 100%, rgba(237, 155, 207, 1) 100%) !important;
+    color: var(--beige-0) !important;
+    border: 1px solid rgba(0, 0, 0, 0.55) !important;
+}
+
+.stButton > button:not([kind='secondary']):hover,
+.tButton > button:not([kind='secondary']):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(7, 18, 38, 0.2);
+    border-color: rgba(247, 198, 214, 0.95) !important;
+    filter: brightness(1.06);
+}
+
+.stButton > button[kind='secondary'],
+.tButton > button[kind='secondary'] {
+    background: rgba(255, 255, 255, 0.78) !important;
+    color: var(--navy-2) !important;
+    border: 1px solid var(--stroke) !important;
+}
+
+.stButton > button[kind='secondary']:hover,
+.tButton > button[kind='secondary']:hover {
+    border-color: rgba(247, 198, 214, 0.85) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Streamlit renders primary label inside markdown <p> */
+.stButton > button :is(p, span),
+.tButton > button :is(p, span) {
+    color: inherit !important;
+}
+
+div[data-testid='stDownloadButton'] button {
+    background: linear-gradient(180deg, var(--navy-2), var(--navy-1)) !important;
+    color: var(--beige-0) !important;
+}
+
+/* Download button label is rendered inside a markdown <p>. */
+div[data-testid='stDownloadButton'] button p {
+    color: rgba(250, 250, 250, 1) !important;
+}
+
+/* ---------- Alerts / spinner / footer ---------- */
+.main .stAlert {
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(247, 198, 214, 0.45);
+}
+
+.stSpinner > div > div {
+    border-top-color: var(--baby-pink-2) !important;
+}
+
+.app-footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(18, 50, 92, 0.1);
+}
