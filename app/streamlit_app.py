@@ -1,13 +1,14 @@
 import streamlit as st
 import os
 import sys
+import time
 import pandas as pd
 
-# Ensure the parent directory is in the path to import src modules
+# add parent dir so we can import from src/
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 try:
-    # Keep startup imports light: importing torch/bertopic eagerly can crash Streamlit on some macOS setups.
+    # lazy import — torch/bertopic can be heavy and crash on some macOS setups
     from src.qa.rag_pipeline import RAGPipeline
 except ImportError:
     class RAGPipeline:
@@ -39,7 +40,7 @@ DEMO_SEARCH_QUERIES = [
     ("Systematic reviews", "systematic review digital health literacy eHealth"),
 ]
 
-# Page Config
+# page setup
 st.set_page_config(
     page_title="DHLitSearch",
     page_icon="🧬",
@@ -47,7 +48,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Load custom CSS
+# inject custom stylesheet
 def load_css(file_name):
     try:
         with open(file_name) as f:
@@ -57,7 +58,7 @@ def load_css(file_name):
 
 load_css(os.path.join(os.path.dirname(__file__), 'style.css'))
 
-# Initialize RAG Engine in Session State
+# single shared RAG engine (cached so it doesn't reload on every rerun)
 @st.cache_resource
 def get_rag_engine():
     return RAGPipeline()
@@ -66,11 +67,13 @@ def get_rag_engine():
 
 bot = get_rag_engine()
 
-# Initialize Chat History
+# session defaults
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "search_history" not in st.session_state:
+    st.session_state.search_history = []
 
-# --- SIDEBAR CONFIGURATION ---
+# --- sidebar controls ---
 with st.sidebar:
     st.title("DHLitSearch")
     st.caption("Corpus retrieval · BioBERT · Chroma")
@@ -99,7 +102,7 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
 
-# --- MAIN LAYOUT (TABS) ---
+# --- main layout ---
 st.markdown(
     """
     <div class="app-hero">
@@ -124,22 +127,21 @@ with tab1:
         unsafe_allow_html=True,
     )
     st.markdown("##### Conversation")
-    # Display Chat History 
-    # Wrap in a container to push input to bottom if necessary
+    # render chat history
     chat_container = st.container()
     with chat_container:
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-    # Chat Input
+    # handle new user input
     if prompt := st.chat_input("Ask about digital health literacy, telehealth, interventions, measurement…"):
-        # Add user message to state and display
+        # save user message and show it
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # Get assistant response
+        # get LLM answer
         with st.chat_message("assistant"):
             with st.spinner("Synthesizing biomedical research..."):
                 try:
@@ -193,6 +195,16 @@ with tab2:
             st.session_state["last_search_query"] = q
             st.session_state["last_search_rerank"] = bool(st.session_state.get("rerank", True))
             st.session_state["last_search_results"] = [r.to_dict() for r in results]
+            
+            # save to search history (keep last 10)
+            history_entry = {
+                "id": f"search_{int(time.time())}",
+                "timestamp": time.strftime("%I:%M %p"),
+                "query": q,
+                "results": st.session_state["last_search_results"]
+            }
+            st.session_state.search_history.insert(0, history_entry)
+            st.session_state.search_history = st.session_state.search_history[:10]
 
     with st.form("semantic_search_form", clear_on_submit=False):
         query = st.text_input(
@@ -205,7 +217,7 @@ with tab2:
             rerank = st.checkbox("Hybrid re-rank (keywords + recency)", value=True, key="rerank")
         with col_b:
             min_words = st.number_input(
-                "Minimum abstract length (words)",
+                "Exclude abstracts shorter than (words)",
                 min_value=0,
                 max_value=200,
                 value=0,
@@ -214,7 +226,7 @@ with tab2:
                 key="min_words",
             )
 
-        # Keep a submit control for Enter-to-submit, but hide it via CSS to avoid UI redundancy.
+        # hidden submit button — lets Enter key trigger the form
         submitted = st.form_submit_button(" ", use_container_width=True, type="primary")
         if submitted:
             _run_semantic_search_from_state()
@@ -234,8 +246,10 @@ with tab2:
         st.caption(f"Last query: _{last_q}_")
         
         st.markdown("##### Overview (top 5 papers)")
-        if "top5_overview" not in st.session_state or st.session_state.get("overview_query") != last_q:
-            top5 = df.head(5)
+        top5 = df.head(5)
+        top5_ids = "-".join(top5["paper_id"].astype(str).tolist())
+        
+        if "top5_overview" not in st.session_state or st.session_state.get("overview_paper_ids") != top5_ids:
             context = ""
             for i, row in top5.iterrows():
                 authors = row.get("authors", "")
@@ -243,7 +257,7 @@ with tab2:
                 
                 auth_list = str(authors).split(",")
                 if len(auth_list) > 1:
-                    # e.g. "Emeka B. Okeke" -> "Okeke et al."
+                    # shorten to "Okeke et al." style
                     cite_name = f"{auth_list[0].strip().split()[-1]} et al."
                 elif len(auth_list) == 1 and auth_list[0]:
                     cite_name = auth_list[0].strip().split()[-1]
@@ -251,7 +265,7 @@ with tab2:
                     cite_name = "Unknown"
                     
                 paper_id = row.get("paper_id", "#")
-                # Format as a markdown link
+                # build a clickable citation link
                 citation_key = f"[{cite_name}, {year}]({paper_id})"
                 context += f"Citation Key: {citation_key}\nTitle: {row.get('title')}\nAbstract: {row.get('abstract')}\n\n"
             
@@ -259,16 +273,26 @@ with tab2:
             
             with st.spinner("Synthesizing top 5 papers..."):
                 response = "⚠️ Overview generation requires Gemini API or Ollama to be configured."
-                try:
-                    if bot.gemini is not None:
-                        response = bot.gemini.generate(prompt).text
-                    elif bot.ollama is not None:
-                        response = bot.ollama.generate(prompt).text
-                except Exception as e:
-                    response = f"⚠️ Overview generation failed: {e}"
+                for attempt in range(3):
+                    try:
+                        if bot.gemini is not None:
+                            response = bot.gemini.generate(prompt).text
+                            break
+                        elif bot.ollama is not None:
+                            response = bot.ollama.generate(prompt).text
+                            break
+                    except Exception as e:
+                        if attempt < 2:
+                            time.sleep(2)
+                        else:
+                            err_str = str(e)
+                            if "RESOURCE_EXHAUSTED" in err_str or "429" in err_str:
+                                response = "⏳ **Gemini API rate limit reached.** The free tier allows a limited number of requests per minute. Please wait ~30 seconds and refresh the page to try again."
+                            else:
+                                response = f"⚠️ Overview generation is temporarily unavailable. Please try again in a moment."
             
             st.session_state["top5_overview"] = response
-            st.session_state["overview_query"] = last_q
+            st.session_state["overview_paper_ids"] = top5_ids
             
         st.info(st.session_state["top5_overview"])
 
@@ -277,6 +301,9 @@ with tab2:
             df[["paper_id", "title", "year", "journal", "authors"]].fillna(""),
             use_container_width=True,
             hide_index=True,
+            column_config={
+                "year": st.column_config.NumberColumn(format="%d")
+            }
         )
 
         st.download_button(
@@ -345,8 +372,49 @@ with tab3:
                 st.warning("No topics found (or all documents were treated as outliers). Try lowering min topic size.")
             else:
                 st.markdown("##### Top topics")
+                
+                # generate readable topic labels via Gemini
+                if "topic_labels" not in st.session_state or st.session_state.get("topic_labels_model") != id(out):
+                    st.session_state["topic_labels"] = {}
+                    st.session_state["topic_labels_model"] = id(out)
+                    
+                    if bot.gemini is not None:
+                        prompt = "Generate a short, 2-3 word human-readable label for each of the following research topics based on their top keywords. Return EXACTLY one label per line, in the exact same order.\n\n"
+                        for s in summaries[:12]:
+                            prompt += f"Topic {s.topic_id}: {', '.join([w for w, _ in s.top_words[:10]])}\n"
+                            
+                        with st.spinner("Generating topic labels..."):
+                            for attempt in range(3):
+                                try:
+                                    response_text = bot.gemini.generate(prompt).text
+                                    lines = [line.strip() for line in response_text.strip().split("\n") if line.strip()]
+                                    
+                                    import re
+                                    for idx, s in enumerate(summaries[:12]):
+                                        if idx < len(lines):
+                                            clean_label = re.sub(r'^(Topic\s*\d+:?|\d+\.|-|\*)\s*', '', lines[idx]).strip()
+                                            st.session_state["topic_labels"][s.topic_id] = clean_label
+                                    break
+                                except Exception as primary_e:
+                                    if attempt < 2:
+                                        time.sleep(2)
+                                    else:
+                                        # fallback: just title-case top keywords if LLM is down
+                                        st.warning("LLM unavailable — using keyword-based labels instead.")
+                                        for s in summaries[:12]:
+                                            top2 = [w.title() for w, _ in s.top_words[:2]]
+                                            st.session_state["topic_labels"][s.topic_id] = " ".join(top2)
+                
                 topic_rows = []
                 for s in summaries[:12]:
                     words = ", ".join([w for w, _ in s.top_words])
-                    topic_rows.append({"topic_id": s.topic_id, "count": s.count, "top_words": words})
+                    label = st.session_state["topic_labels"].get(s.topic_id, "Unknown Theme")
+                    topic_rows.append({"Topic ID": s.topic_id, "Theme": label, "Doc Count": s.count, "Keywords": words})
                 st.dataframe(pd.DataFrame(topic_rows), use_container_width=True, hide_index=True)
+
+with st.sidebar:
+    if st.session_state.search_history:
+        st.markdown("---")
+        st.markdown("##### 🕰️ Search History Bank")
+        for entry in st.session_state.search_history:
+            st.caption(f"**{entry['timestamp']}** — _{entry['query']}_ ({len(entry['results'])} docs)")
