@@ -16,17 +16,12 @@ except ImportError:
             time.sleep(1.5)
             return "⚠️ *Backend dependencies missing. This is a mockup answer allowing you to view and interact with the UI.*"
 
-
 def _semantic_search(*args, **kwargs):
     from src.retrieval.semantic_search import semantic_search as _fn
 
     return _fn(*args, **kwargs)
 
 
-def _get_summarizer_impl():
-    from src.summarization.bart_summarize import BartSummarizer
-
-    return BartSummarizer()
 
 
 def _fit_bertopic(*args, **kwargs):
@@ -67,9 +62,7 @@ load_css(os.path.join(os.path.dirname(__file__), 'style.css'))
 def get_rag_engine():
     return RAGPipeline()
 
-@st.cache_resource
-def _get_summarizer():
-    return _get_summarizer_impl()
+
 
 bot = get_rag_engine()
 
@@ -119,76 +112,6 @@ st.markdown(
 )
 
 tab1, tab2, tab3 = st.tabs(["Semantic Q&A", "Semantic search", "Theme explorer"])
-
-# --- DEBUG PROBE: inspect Theme explorer tab icon source ---
-# This runs in the browser, inspects the 3rd tab button DOM & computed styles,
-# and writes a single NDJSON line to the debug log via the local ingest endpoint.
-try:
-    # --- server-side debug breadcrumb (proves this file executed) ---
-    import json as _json
-    import time as _time
-    os.makedirs(os.path.join(os.path.dirname(__file__), "..", ".cursor"), exist_ok=True)
-    with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".cursor", "debug-9f6cc2.log")), "a", encoding="utf-8") as _f:
-        _f.write(
-            _json.dumps(
-                {
-                    "sessionId": "9f6cc2",
-                    "runId": "tabs-icon-probe",
-                    "hypothesisId": "H_PY",
-                    "location": "app/streamlit_app.py:py-breadcrumb",
-                    "message": "Streamlit app executed (breadcrumb)",
-                    "timestamp": int(_time.time() * 1000),
-                    "data": {"component_html_injected": True},
-                }
-            )
-            + "\n"
-        )
-
-    import streamlit.components.v1 as components
-
-    components.html(
-        """
-        <script>
-        (function () {
-          try {
-            const btn = document.querySelector("div[data-testid='stTabs'] [data-baseweb='tab-list'] button[data-baseweb='tab']:nth-child(3)");
-            const label = btn ? btn.querySelector("p") : null;
-            const payload = {
-              sessionId: "9f6cc2",
-              runId: "tabs-icon-probe",
-              hypothesisId: "H_DOM",
-              location: "app/streamlit_app.py:tabs-probe",
-              message: "Theme explorer tab DOM/styles probe",
-              timestamp: Date.now(),
-              data: {
-                found: Boolean(btn),
-                buttonOuterHTML: btn ? btn.outerHTML.slice(0, 1500) : null,
-                labelText: label ? label.textContent : null,
-                labelBeforeContent: label ? getComputedStyle(label, "::before").content : null,
-                labelAfterContent: label ? getComputedStyle(label, "::after").content : null,
-                btnBgImage: btn ? getComputedStyle(btn).backgroundImage : null,
-                btnMaskImage: btn ? (getComputedStyle(btn).maskImage || getComputedStyle(btn).webkitMaskImage) : null,
-                childTags: btn ? Array.from(btn.children).map(n => n.tagName + (n.getAttribute("data-baseweb") ? `[data-baseweb=${n.getAttribute("data-baseweb")}]` : "")) : [],
-                descendantSvgCount: btn ? btn.querySelectorAll("svg").length : null,
-                descendantSpanCount: btn ? btn.querySelectorAll("span").length : null
-              }
-            };
-            fetch("http://127.0.0.1:7288/ingest/c55938b1-f7ff-409f-a6fb-9582d1735cf9", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Debug-Session-Id": "9f6cc2"
-              },
-              body: JSON.stringify(payload)
-            }).catch(() => {});
-          } catch (e) {}
-        })();
-        </script>
-        """,
-        height=1,
-    )
-except Exception:
-    pass
 
 with tab1:
     st.markdown(
@@ -309,6 +232,46 @@ with tab2:
             lr = st.session_state.get("last_search_rerank", rerank)
             st.metric("Re-ranking", "On" if lr else "Off")
         st.caption(f"Last query: _{last_q}_")
+        
+        st.markdown("##### Overview (top 5 papers)")
+        if "top5_overview" not in st.session_state or st.session_state.get("overview_query") != last_q:
+            top5 = df.head(5)
+            context = ""
+            for i, row in top5.iterrows():
+                authors = row.get("authors", "")
+                year = row.get("year", "")
+                
+                auth_list = str(authors).split(",")
+                if len(auth_list) > 1:
+                    # e.g. "Emeka B. Okeke" -> "Okeke et al."
+                    cite_name = f"{auth_list[0].strip().split()[-1]} et al."
+                elif len(auth_list) == 1 and auth_list[0]:
+                    cite_name = auth_list[0].strip().split()[-1]
+                else:
+                    cite_name = "Unknown"
+                    
+                paper_id = row.get("paper_id", "#")
+                # Format as a markdown link
+                citation_key = f"[{cite_name}, {year}]({paper_id})"
+                context += f"Citation Key: {citation_key}\nTitle: {row.get('title')}\nAbstract: {row.get('abstract')}\n\n"
+            
+            prompt = f"Based on the following top 5 research papers retrieved for the query '{last_q}', provide a concise, factual 1-paragraph overview of their main findings. When referencing a paper, you MUST cite it inline using its exact Citation Key (which is a clickable markdown link) provided below. Do not use [Paper 1] or introduce any external information.\n\n{context}"
+            
+            with st.spinner("Synthesizing top 5 papers..."):
+                response = "⚠️ Overview generation requires Gemini API or Ollama to be configured."
+                try:
+                    if bot.gemini is not None:
+                        response = bot.gemini.generate(prompt).text
+                    elif bot.ollama is not None:
+                        response = bot.ollama.generate(prompt).text
+                except Exception as e:
+                    response = f"⚠️ Overview generation failed: {e}"
+            
+            st.session_state["top5_overview"] = response
+            st.session_state["overview_query"] = last_q
+            
+        st.info(st.session_state["top5_overview"])
+
         st.markdown("##### Ranked list")
         st.dataframe(
             df[["paper_id", "title", "year", "journal", "authors"]].fillna(""),
@@ -325,7 +288,7 @@ with tab2:
         )
 
         st.markdown("---")
-        st.markdown("##### Abstracts & summaries")
+        st.markdown("##### Abstracts")
         for i, row in df.head(10).iterrows():
             title = row.get("title") or "Untitled"
             paper_id = row.get("paper_id")
@@ -335,9 +298,6 @@ with tab2:
                 st.markdown(f"**Authors:** {row.get('authors','')}")
                 st.markdown("**Abstract:**")
                 st.write(row.get("abstract", ""))
-                if st.button("Summarize abstract (BART)", key=f"summarize_{paper_id}"):
-                    with st.spinner("Summarizing with local BART..."):
-                        st.markdown(_get_summarizer().summarize(str(row.get("abstract", ""))))
     elif last_q:
         st.warning("No rows passed your filters. Try **minimum abstract length = 0** or widen the year range in the sidebar.")
     else:

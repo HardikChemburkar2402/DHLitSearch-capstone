@@ -1,8 +1,8 @@
-import torch
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-
 class BartSummarizer:
     def __init__(self):
+        import torch
+        from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+        
         self.model_name = "facebook/bart-large-cnn"
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = AutoModelForSeq2SeqLM.from_pretrained(self.model_name)

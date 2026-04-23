@@ -1,12 +1,13 @@
 import json
 import os
-import chromadb
+
 
 INPUT_PATH = "data/processed/embeddings.json"
 CHROMA_DIR = ".chroma"
 COLLECTION  = "dhlitsearch_abstracts"
 
 def load_and_store():
+    import chromadb
     with open(INPUT_PATH) as f:
         data = json.load(f)
 
@@ -48,6 +49,7 @@ def load_and_store():
 
 
 def search(query_embedding: list, n_results: int = 10):
+    import chromadb
     client     = chromadb.PersistentClient(path=CHROMA_DIR)
     collection = client.get_collection(COLLECTION)
     results    = collection.query(

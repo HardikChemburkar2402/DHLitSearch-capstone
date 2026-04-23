@@ -3,19 +3,26 @@ from dotenv import load_dotenv
 
 from src.retrieval.ranking import re_rank_results
 from src.embeddings.biobert_embed import embed_abstract
-from src.embeddings.chromadb_store import search
 from src.qa.llm_interface import GeminiLLM, OllamaLLM, LLMProviderError
-from src.summarization.bart_summarize import BartSummarizer
 
 load_dotenv()
 
 class RAGPipeline:
     def __init__(self):
-        self.gemini = GeminiLLM(model="gemini-2.5-flash")
-        self.ollama = OllamaLLM(model="llama3")
+        # Keep Streamlit startup resilient: if a provider isn't installed/configured,
+        # the app should still load and fall back gracefully at question-time.
+        try:
+            self.gemini = GeminiLLM(model="gemini-2.5-flash")
+        except Exception:
+            self.gemini = None
+        try:
+            self.ollama = OllamaLLM(model="llama3")
+        except Exception:
+            self.ollama = None
         self.local_summarizer = None
 
     def ask_question(self, query: str) -> str:
+        from src.embeddings.chromadb_store import search
         query_embedding = embed_abstract(query)
         results = search(query_embedding, n_results=100)
         
@@ -68,27 +75,30 @@ class RAGPipeline:
         Question: {query}
         """
         
-        # --- ROBUST RETRY LOGIC FOR PRESENTATIONS ---
+        # retry api on rate limits
         max_retries = 3
-        for attempt in range(max_retries):
-            try:
-                return self.gemini.generate(prompt).text
-            except Exception as e:
-                if attempt < max_retries - 1:
-                    print(f"⚠️ API High Demand (Attempt {attempt+1}/{max_retries}). Retrying in 2 seconds...")
-                    time.sleep(2)
-                else:
-                    print("\n⚠️ Gemini unavailable. Falling back to local Ollama...\n")
-                    break
+        if self.gemini is not None:
+            for attempt in range(max_retries):
+                try:
+                    return self.gemini.generate(prompt).text
+                except Exception:
+                    if attempt < max_retries - 1:
+                        print(f"⚠️ API High Demand (Attempt {attempt+1}/{max_retries}). Retrying in 2 seconds...")
+                        time.sleep(2)
+                    else:
+                        print("\n⚠️ Gemini unavailable. Falling back to local Ollama...\n")
+                        break
                     
-        # --- LOCAL OFFLINE FALLBACK (OLLAMA) ---
-        try:
-            return self.ollama.generate(prompt).text
-        except LLMProviderError:
-            print("\n⚠️ Ollama unavailable. Falling back to extractive evidence...\n")
+        # fallback to local ollama
+        if self.ollama is not None:
+            try:
+                return self.ollama.generate(prompt).text
+            except LLMProviderError:
+                print("\n⚠️ Ollama unavailable. Falling back to extractive evidence...\n")
 
-        # --- FINAL FALLBACK (EXTRACTIVE EVIDENCE) ---
+        # fallback to local extractive summarizer
         if self.local_summarizer is None:
+            from src.summarization.bart_summarize import BartSummarizer
             self.local_summarizer = BartSummarizer()
 
         evidence = "*(Fallback mode: showing evidence summaries — LLM generation unavailable)*\n\n"
