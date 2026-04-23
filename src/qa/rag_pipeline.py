@@ -9,8 +9,8 @@ load_dotenv()
 
 class RAGPipeline:
     def __init__(self):
-        # Keep Streamlit startup resilient: if a provider isn't installed/configured,
-        # the app should still load and fall back gracefully at question-time.
+        # wrap provider init in try/except so the app still loads
+        # even if a provider isn't installed or configured
         try:
             self.gemini = GeminiLLM(model="gemini-2.5-flash")
         except Exception:
@@ -75,7 +75,7 @@ class RAGPipeline:
         Question: {query}
         """
         
-        # retry api on rate limits
+        # retry on rate limits
         max_retries = 3
         if self.gemini is not None:
             for attempt in range(max_retries):
@@ -89,14 +89,14 @@ class RAGPipeline:
                         print("\n⚠️ Gemini unavailable. Falling back to local Ollama...\n")
                         break
                     
-        # fallback to local ollama
+        # try local ollama if gemini is down
         if self.ollama is not None:
             try:
                 return self.ollama.generate(prompt).text
             except LLMProviderError:
                 print("\n⚠️ Ollama unavailable. Falling back to extractive evidence...\n")
 
-        # fallback to local extractive summarizer
+        # last resort: extractive summarization
         if self.local_summarizer is None:
             from src.summarization.bart_summarize import BartSummarizer
             self.local_summarizer = BartSummarizer()

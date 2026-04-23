@@ -17,20 +17,24 @@ class LLMProviderError(RuntimeError):
 
 
 class GeminiLLM:
-    """
-    Thin wrapper around the Google Generative AI client.
-    We keep this isolated so the rest of the app can gracefully fall back when
-    Gemini is rate-limited or unavailable.
-    """
+    """Wrapper for the Google GenAI client (Vertex AI preferred, AI Studio fallback)."""
 
     def __init__(self, model: str = "gemini-2.5-flash"):
         self.model = model
-        # Import lazily so the project can run without Gemini installed/configured.
         from google import genai
 
-        # GEMINI_API_KEY is expected to be present in environment; genai.Client()
-        # will pick it up.
-        self._client = genai.Client()
+        # prefer Vertex AI (billed to cloud project); fall back to API key
+        try:
+            self._client = genai.Client(
+                vertexai=True,
+                project="hardy-pattern-494221-i8",
+                location="us-central1",
+            )
+            self._provider = "vertexai"
+        except Exception:
+            # API-key fallback (AI Studio)
+            self._client = genai.Client()
+            self._provider = "aistudio"
 
     def generate(self, prompt: str) -> LLMResult:
         try:
@@ -38,21 +42,18 @@ class GeminiLLM:
             text = getattr(response, "text", None) or ""
             if not text.strip():
                 raise LLMProviderError("Gemini returned empty text.")
-            return LLMResult(text=text, provider="gemini", model=self.model)
+            return LLMResult(text=text, provider=f"gemini-{self._provider}", model=self.model)
         except Exception as e:
             raise LLMProviderError(str(e)) from e
 
 
 class OllamaLLM:
-    """
-    Local LLM via Ollama. Requires the Ollama app/service to be running and the
-    model to be pulled (e.g., `ollama pull llama3`).
-    """
+    """Local LLM via Ollama — needs the service running and the model pulled."""
 
     def __init__(self, model: str = "llama3", host: Optional[str] = None):
         self.model = model
         self.host = host or os.getenv("OLLAMA_HOST")
-        # Import lazily so installs without Ollama still work.
+        # lazy import so the project runs even without ollama installed
         import ollama
 
         self._ollama = ollama
