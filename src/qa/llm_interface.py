@@ -23,28 +23,54 @@ class GeminiLLM:
         self.model = model
         from google import genai
 
-        # prefer Vertex AI (billed to cloud project); fall back to API key
+        # If GOOGLE_CLOUD_PROJECT is set, talk to Gemini through Vertex AI
+        # (charged to the cloud project + free credits). Otherwise fall back
+        # to the API-key path (AI Studio).
+        project = os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("VERTEX_AI_PROJECT")
+        location = os.getenv("GOOGLE_CLOUD_LOCATION") or os.getenv("VERTEX_AI_LOCATION") or "us-central1"
+        prefer_vertex = os.getenv("GEMINI_PREFER_VERTEXAI", "1").strip().lower() not in {"0", "false", "no"}
+
+        self._genai = genai
+        self._project = project
+        self._location = location
+        self._provider = "aistudio"
+
         try:
-            self._client = genai.Client(
-                vertexai=True,
-                project="hardy-pattern-494221-i8",
-                location="us-central1",
-            )
-            self._provider = "vertexai"
+            if prefer_vertex and project:
+                self._client = genai.Client(vertexai=True, project=project, location=location)
+                self._provider = "vertexai"
+            else:
+                self._client = genai.Client()
+                self._provider = "aistudio"
         except Exception:
-            # API-key fallback (AI Studio)
+            # Vertex init can fail for auth / quota reasons — take the API-key
+            # path instead so the UI still has a working LLM.
             self._client = genai.Client()
             self._provider = "aistudio"
 
+    def provider_label(self) -> str:
+        if self._provider == "vertexai":
+            return "Vertex AI"
+        return "AI Studio (API key)"
+
+    def _switch_to_aistudio(self) -> None:
+        self._client = self._genai.Client()
+        self._provider = "aistudio"
+
     def generate(self, prompt: str) -> LLMResult:
-        try:
-            response = self._client.models.generate_content(model=self.model, contents=prompt)
-            text = getattr(response, "text", None) or ""
-            if not text.strip():
-                raise LLMProviderError("Gemini returned empty text.")
-            return LLMResult(text=text, provider=f"gemini-{self._provider}", model=self.model)
-        except Exception as e:
-            raise LLMProviderError(str(e)) from e
+        # If Vertex fails at runtime (auth/quota), fall back to AI Studio once.
+        for attempt in range(2):
+            try:
+                response = self._client.models.generate_content(model=self.model, contents=prompt)
+                text = getattr(response, "text", None) or ""
+                if not text.strip():
+                    raise LLMProviderError("Gemini returned empty text.")
+                return LLMResult(text=text, provider=f"gemini-{self._provider}", model=self.model)
+            except Exception as e:
+                if attempt == 0 and self._provider == "vertexai":
+                    self._switch_to_aistudio()
+                    continue
+                raise LLMProviderError(str(e)) from e
 
 
 class OllamaLLM:

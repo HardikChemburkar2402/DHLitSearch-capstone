@@ -2,7 +2,7 @@ import statistics
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from rouge_score import rouge_scorer
 from src.embeddings.biobert_embed import embed_abstract

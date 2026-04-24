@@ -25,6 +25,9 @@ chroma_db/
 # Streamlit cache
 .streamlit/
 
+# macOS Finder metadata
+.DS_Store
+
 # ────────────────────────────────────────────────────────────────────────────
 
 
@@ -235,3 +238,4 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+extracted_proposal.txt

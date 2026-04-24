@@ -1,5 +1,4 @@
 import json
-import os
 
 
 INPUT_PATH = "data/processed/embeddings.json"

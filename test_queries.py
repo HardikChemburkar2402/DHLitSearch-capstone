@@ -6,13 +6,13 @@ queries = [
     "Can digital health education reduce healthcare disparities?"
 ]
 
-print("🚀 Starting Diverse Query Testing\n")
+print("Running smoke-test queries against the RAG pipeline\n")
 bot = RAGPipeline()
 
 for i, query in enumerate(queries, 1):
-    print(f"========================================")
+    print("=" * 40)
     print(f"QUERY {i}: {query}")
-    print(f"========================================")
+    print("=" * 40)
     answer = bot.ask_question(query)
     print("\nANSWER:")
     print(answer)
