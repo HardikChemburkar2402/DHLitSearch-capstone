@@ -57,14 +57,14 @@ DHLitSearch is a domain-specific intelligent literature assistant for **digital 
 └────────────────────────┬────────────────────────────────────────┘
                          │
           ┌──────────────▼──────────────┐
-          │      Query Processing        │
-          │   BioBERT Query Embedding    │
+          │      Query Processing       │
+          │   BioBERT Query Embedding   │
           └──────────────┬──────────────┘
                          │
      ┌───────────────────▼──────────────────────┐
-     │           ChromaDB Vector Store           │
-     │   2,700+ Digital Health Literacy Papers   │
-     │     Indexed by BioBERT Embeddings          │
+     │           ChromaDB Vector Store          │
+     │   414,506+ Digital Health Literacy Papers│
+     │     Indexed by BioBERT Embeddings         │
      └──────┬──────────────────────┬─────────────┘
             │                      │
    ┌────────▼────────┐    ┌────────▼──────────────┐
@@ -246,7 +246,7 @@ streamlit run app/streamlit_app.py
 
 | Metric                     | Value                                      |
 | -------------------------- | ------------------------------------------ |
-| Total raw papers collected | 490,482+                                   |
+| Total raw papers collected | 644,697                                    |
 | Primary data source        | OpenAlex (19 queries)                      |
 | Embedding model            | BioBERT (dmis-lab/biobert-base-cased-v1.2) |
 | Embedding dimensions       | 768                                        |
@@ -263,10 +263,10 @@ streamlit run app/streamlit_app.py
 | Proposal & Planning             | Feb 18 – Feb 24 | ✅ Complete    |
 | Data Collection & Preprocessing | Feb 25 – Mar 9  | ✅ Complete    |
 | BioBERT Embedding Pipeline      | Mar 10 – Mar 16 | ✅ Complete    |
-| Summarization & RAG Pipeline    | Mar 17 – Mar 30 | 🔄 In Progress |
-| Frontend (Streamlit)            | Mar 31 – Apr 13 | ⏳ Upcoming    |
-| Evaluation                      | Apr 14 – Apr 20 | ⏳ Upcoming    |
-| Final Paper & Documentation     | Apr 21 – Apr 27 | ⏳ Upcoming    |
+| Summarization & RAG Pipeline    | Mar 17 – Mar 30 | ✅ Complete    |
+| Frontend (Streamlit)            | Mar 31 – Apr 13 | ✅ Complete    |
+| Evaluation                      | Apr 14 – Apr 20 | ✅ Complete    |
+| Final Paper & Documentation     | Apr 21 – Apr 27 | 🔄 In Progress |
 | iShowcase Presentation          | May 10 – May 21 | ⏳ Upcoming    |
 
 ---
@@ -276,11 +276,11 @@ streamlit run app/streamlit_app.py
 ```
 OpenAlex API
   ↓
-openalex_fetch.py      → 4,798 raw papers collected
+openalex_fetch.py      → 644,697 raw papers collected
   ↓
-preprocess.py          → 4,728 cleaned & validated papers
+preprocess.py          → 632,127 cleaned & validated papers
   ↓
-deduplicate.py         → 4,289 unique papers
+deduplicate.py         → 414,506 unique papers
   ↓
 biobert_embed.py       → 4,289 × 768-dimensional embeddings
   ↓
