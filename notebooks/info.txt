@@ -1,1 +1,0 @@
-Jupyter notebooks used for exploration and experiments — not production code. Three planned: data exploration, embedding experiments, and RAG experiments. These are especially useful for showing Dr. Xiao Hu iterative progress without requiring her to run code
