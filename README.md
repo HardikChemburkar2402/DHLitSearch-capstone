@@ -112,7 +112,7 @@ DHLitSearch RAG approach:
 ## 📦 Tech Stack
 
 ```
-Data Collection      OpenAlex API          19 queries · 490,482 papers · no key required
+Data Collection      OpenAlex API          19 queries · 414,000 +  papers · no key required
 Embeddings           BioBERT               dmis-lab/biobert-base-cased-v1.2 · 768 dimensions
 Vector Store         ChromaDB              ~10 GB · cosine similarity · persistent local store
 Summarization        BART-large-cnn        Abstractive · 50-word minimum filter · Metal acceleration
@@ -162,10 +162,6 @@ dhlitsearch-capstone/
 ├── app/
 │   └── streamlit_app.py        # Three-tab Streamlit application
 │
-├── notebooks/
-│   ├── 01_data_exploration.ipynb
-│   ├── 02_embedding_experiments.ipynb
-│   └── 03_rag_experiments.ipynb
 │
 ├── docs/
 │   ├── proposal.pdf
@@ -173,7 +169,6 @@ dhlitsearch-capstone/
 │   ├── ethics_chart.xlsx
 │   └── evaluation_report.md    # Precision@K and ROUGE results
 │
-├── tests/
 ├── .env.example
 ├── .gitignore
 ├── requirements.txt
